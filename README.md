@@ -212,18 +212,6 @@ https://documenter.getpostman.com/view/23709764/2sBXwntXNp
 You can import the collection into Postman via that link for ready-to-run examples.
 
 ---
-
-## Next steps / suggestions
-
-- Add OpenAPI/Swagger (springdoc-openapi) to generate interactive API docs.
-- Add integration tests with MockMvc or Testcontainers for a more representative environment.
-- Add authentication/authorization if the API should be private.
-
----
-
-If you'd like, I can now:
-- Add detailed example payloads for every endpoint in this README.
-- Generate an OpenAPI spec or Swagger UI and wire it into this project.
 - Inspect and fix the `NullPointerException` you saw earlier by reviewing `TaskController` and `TaskServiceImpl` and running the tests.
 
 Tell me which of these you'd like me to pick next and I'll proceed.
