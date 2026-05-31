@@ -2,7 +2,7 @@
 
 A complete, end-to-end Task Management REST API built with Spring Boot (Java 17).
 
-This document explains the project purpose, architecture, features implemented, how to build/run/test it locally, configuration notes, and a concise API reference. At the end you'll find the Postman API documentation link for full request/response examples.
+This document explains the project purpose, architecture, features implemented, how to build/run/test it locally, configuration notes, and a concise API reference. At the end you'll find a link to the project's Postman documentation for full request/response examples.
 
 ---
 
@@ -15,7 +15,6 @@ This document explains the project purpose, architecture, features implemented, 
 - Data model and DTOs
 - Configuration
 - Build, run, test (commands)
-- Testing strategy (unit + integration)
 - Common troubleshooting
 - API endpoints (summary)
 - Postman / API documentation link
@@ -24,103 +23,105 @@ This document explains the project purpose, architecture, features implemented, 
 
 ## Project overview
 
-The Task Management API provides REST endpoints to create, read, update, delete, and list tasks with pagination and status filtering. The project is designed as a small microservice and demonstrates:
+The Task Management API provides endpoints to create, read, update, delete, and list tasks with pagination and status filtering. It is a simple microservice-style REST API suitable for learning Spring Boot, JPA, validation, and testing.
 
-- Layered architecture (Controller -> Service -> Repository)
-- DTOs for request/response separation from persistence models
-- Validation and global error handling
-- Persistence with Spring Data JPA and H2 for local/integration tests
-- Unit tests (Mockito + JUnit 5) and integration tests (Spring Boot Test + MockMvc)
-
-This repository is intended for learning, quick prototyping and as a base to extend with authentication, file uploads, or additional business rules.
+Primary goals:
+- Provide a clean, well-structured Spring Boot service.
+- Demonstrate controller -> service -> repository layering.
+- Use DTOs for requests/responses and entity mapping.
+- Use an in-memory H2 database for easy local development and testing.
+- Include unit tests and common validation/error handling.
 
 ---
 
 ## Architecture & key components
 
-- Spring Boot as the application framework
-- Spring Web for REST controllers
-- Spring Data JPA for data access
-- H2 in-memory database for local development & tests
-- Validation via `spring-boot-starter-validation` (Jakarta Validation)
-- Lombok (optional) for reduced boilerplate
-
-Layering:
-- Controller: HTTP mapping and request/response handling (`/tasks` endpoints)
-- Service: business logic and mapping between DTOs and entities
-- Repository: JPA repository interfaces for persistence
-- DTOs: `TaskRequest` and `TaskResponse` for input/output shapes
+- Spring Boot (starter parent) as the application framework.
+- Spring Web for REST controllers.
+- Spring Data JPA for persistence.
+- H2 in-memory database for local development and tests.
+- Validation via `spring-boot-starter-validation`.
+- Lombok used to reduce boilerplate (constructor/getters/setters) — annotation processing enabled in build.
+- Typical layered architecture:
+  - Controller: request mapping and HTTP handling.
+  - Service: business logic.
+  - Repository: JPA repositories and data access.
+  - DTOs: request/response shapes separate from entities.
 
 ---
 
 ## Features implemented
 
-- Create a task (POST /tasks)
-- Read a single task by id (GET /tasks/{id})
-- Update a task (PUT /tasks/{id})
-- Delete a task (DELETE /tasks/{id})
-- List tasks with pagination and optional status filter (GET /tasks?page=0&size=10&status=OPEN)
-- Validation on incoming request payloads (`@Valid`) with a global exception handler
-- In-memory H2 database for development and tests
-- Unit tests and integration tests scaffolded using JUnit, Mockito and Spring Boot Test
+- Create a task (POST /tasks).
+- Read a single task by id (GET /tasks/{id}).
+- Update a task (PUT /tasks/{id}).
+- Delete a task (DELETE /tasks/{id}).
+- List tasks with pagination and optional status filter (GET /tasks?page=0&size=10&status=OPEN).
+- Validation on incoming request payloads (`@Valid`).
+- Clear separation of DTOs and entities.
+- In-memory H2 database preconfigured for development.
+- Unit test dependencies (Spring Boot test and Mockito) are included.
 
 ---
 
 ## Project structure (key files/folders)
 
 - `src/main/java/com/task_management_api/`
-  - `TaskManagementApiApplication.java` - main application class
+  - `TaskManagementApiApplication.java` - main Spring Boot application class
   - `controller/` - REST controllers (e.g. `TaskController`)
   - `service/` - service interfaces
-  - `service/impl/` - service implementations (business logic)
+  - `service/impl/` - service implementations
   - `repository/` - Spring Data JPA repositories
-  - `entity/` - JPA entity classes (Task, TaskStatus)
-  - `dto/` - request and response DTOs (`TaskRequest`, `TaskResponse`)
-  - `exception/` - custom exceptions and global exception handler
-- `src/test/java/` - unit and integration tests
-- `pom.xml` - maven configuration and dependencies
+  - `entity/` - JPA entity classes
+  - `dto/` - request and response DTOs
+  - `exception/` - custom exceptions and handlers
+- `src/main/resources/application.properties` - runtime configuration
+- `pom.xml` - maven configuration, dependencies, compiler settings
 
 ---
 
 ## Data model & DTOs (summary)
 
-The project uses a `Task` JPA entity and DTOs for API contracts.
+This project uses a `Task` entity (persisted) and separate DTOs to shape API input/output. Typical fields:
 
 - Task entity
-  - id (String, generated UUID)
-  - title (String, required)
-  - description (String, optional)
-  - status (enum: PENDING, IN_PROGRESS, DONE)
-  - dueDate (LocalDate, required)
+  - id (String/UUID)
+  - title (String)
+  - description (String)
+  - status (enum: e.g. OPEN, IN_PROGRESS, DONE)
+  - createdAt, updatedAt (timestamps)
 
-- TaskRequest (DTO used for create/update)
+- TaskRequest (DTO for create/update)
   - title (required)
   - description (optional)
-  - status (optional; defaults to PENDING)
-  - dueDate (required; must be a future date)
+  - status (optional for create, required for update)
 
 - TaskResponse (DTO returned to clients)
-  - id, title, description, status, dueDate
+  - id, title, description, status, createdAt, updatedAt
 
-Exact property details are in `src/main/java/com/task_management_api/entity` and `src/main/java/com/task_management_api/dto`.
+(Exact property names/types can be found in `src/main/java/com/task_management_api/entity` and `dto`.)
 
 ---
 
 ## Configuration
 
-Check `src/main/resources/application.properties` for runtime settings. H2 is included as a runtime dependency and is used in tests by default.
+The application uses sensible defaults for development. Check `src/main/resources/application.properties` for overrides. Key configuration items you may want to change:
 
-Key properties you might care about:
-- `server.port` — change the HTTP port if needed
-- H2 console settings — enable if you want to inspect DB in browser
+- Server port: default may be `8081` in this repo — search `server.port` in `application.properties`.
+- H2 console: enable if you want a browser UI to inspect the database (endpoint is typically `/h2-console`).
+
+Environment variables (optional):
+- `SERVER_PORT` or `server.port` property to change HTTP port.
 
 ---
 
 ## Build, run, test
 
-Prerequisites: Java 17 and Maven.
+Prerequisites:
+- Java 17 installed and `JAVA_HOME` configured.
+- Maven 3.6+
 
-From the project root (where `pom.xml` is located):
+From the project root (where `pom.xml` is located) you can build, run, and test the project using these commands.
 
 - Build and run unit tests:
 
@@ -134,7 +135,7 @@ mvn clean package
 mvn spring-boot:run
 ```
 
-- Run the packaged jar:
+- Run the compiled jar after packaging:
 
 ```powershell
 java -jar target/task-management-api-0.0.1-SNAPSHOT.jar
@@ -147,53 +148,29 @@ mvn test
 ```
 
 Notes:
-- Use `-Dspring.profiles.active=test` to force the `test` profile when running tests with profile-specific properties.
+- If Lombok-generated constructors are used, ensure your IDE has annotation processing enabled to avoid "variable might not have been initialized" warnings in the IDE. The build itself includes annotation processing configuration so Maven will compile fine.
 
 ---
 
-## Testing strategy (implemented in this repo)
-
-This project follows Test-Driven Development (TDD) principles and includes both unit and integration tests.
-
-- Tools used: JUnit 5, Mockito, Spring Boot Test, MockMvc
-- Unit tests:
-  - Service layer tests mock repository dependencies using Mockito to isolate business logic.
-  - DTO/validation tests use Jakarta Validator to ensure `@Valid` constraints behave as expected.
-  - Controller slice tests use `@WebMvcTest` and `@MockBean` to mock the service layer and verify HTTP contract and input validation.
-- Integration tests:
-  - Use `@SpringBootTest` + `@AutoConfigureMockMvc` to run the application context with an in-memory H2 DB and exercise the full stack via MockMvc.
-  - Tests cover full CRUD flow and expected HTTP status codes and responses.
-
-Run tests with:
-
-```powershell
-mvn test
-```
-
-Or run a specific test class:
-
-```powershell
-mvn -Dtest=TaskServiceImplTest test
-```
-
----
-
-## Common troubleshooting & known issues
+## Common troubleshooting
 
 - NullPointerException where a controller's service field is null
-  - Ensure controller is annotated with `@RestController` and that it uses constructor injection for `final` dependencies. Avoid defining duplicate constructors (for example a manual constructor and Lombok-generated one) — the compiler error "constructor is already defined" indicates duplicate constructors exist.
+  - Ensure controller is a Spring bean (`@RestController`) and the service is injected via constructor or `@Autowired`. If you use `private final TaskService taskService`, you must provide a constructor that assigns it (or use Lombok `@RequiredArgsConstructor`).
+  - If you see "constructor is already defined" errors, you may have both a hand-written constructor and Lombok generating one. Remove duplicates — either keep the manual constructor or the Lombok annotation.
 
-- Duplicate dependency entries in `pom.xml`
-  - Remove duplicate dependencies (e.g., `spring-boot-starter-test` appeared twice). This is usually harmless for compilation but makes the POM noisy.
+- Duplicate dependency warnings in `pom.xml`
+  - Remove duplicate dependency entries; this is a warning but not fatal.
 
-- Test failures that depend on time-sensitive data (dueDate):
-  - Use relative dates (LocalDate.now().plusDays(...)) in tests to avoid brittleness.
+- H2 console or datasource issues
+  - Check `application.properties` datasource settings and whether H2 is included in `pom.xml` (it is by default for this project).
+
+If you want, I can open and fix specific files that produce runtime errors (for example, wiring issues where `taskService` is null). I can run quick edits and run unit tests locally in the workspace.
 
 ---
 
 ## API endpoints — quick reference
 
-Base path: `/tasks`
+All endpoints are rooted under `/tasks`.
 
 - POST /tasks
   - Create a new task
@@ -201,42 +178,40 @@ Base path: `/tasks`
   - Response: 201 Created with `TaskResponse` body
 
 - GET /tasks
-  - List tasks with pagination & optional status filter
-  - Query params: `page` (default 0), `size` (default 10), `status` (optional)
+  - List tasks
+  - Query params:
+    - `page` (default 0)
+    - `size` (default 10)
+    - `status` (optional filter by TaskStatus)
   - Response: 200 OK with a paged list of `TaskResponse` objects
 
 - GET /tasks/{id}
-  - Get a single task by id
-  - Response: 200 OK with `TaskResponse` or 404 Not Found
+  - Retrieve a single task by id
+  - Response: 200 OK with `TaskResponse` or 404 if not found
 
 - PUT /tasks/{id}
   - Update an existing task
-  - Body: `TaskRequest`
+  - Body: `TaskRequest` JSON
   - Response: 200 OK with updated `TaskResponse`
 
 - DELETE /tasks/{id}
-  - Delete a task
+  - Delete a task by id
   - Response: 204 No Content on success
 
-Validation errors return 400 with a map of field -> message. Resource not found returns 404 with a JSON error body containing timestamp, status, and message.
+Notes on validation:
+- Request payloads use `@Valid` annotations; invalid input returns 400 with a validation message.
 
 ---
 
 ## Postman / API documentation
 
-Full request/response examples and a collection are available at the Postman documentation linked below. Import it into Postman to try the API quickly.
+Full request/response examples and a collection are available at the Postman documentation linked below:
 
-Postman doc: https://documenter.getpostman.com/view/23709764/2sBXwntXNp
+https://documenter.getpostman.com/view/23709764/2sBXwntXNp
+
+You can import the collection into Postman via that link for ready-to-run examples.
 
 ---
+- Inspect and fix the `NullPointerException` you saw earlier by reviewing `TaskController` and `TaskServiceImpl` and running the tests.
 
-## Next steps / suggestions
-
-- Add OpenAPI (springdoc-openapi) to generate interactive docs.
-- Add Testcontainers for integration tests to run against a real database (Postgres) in CI.
-- Add authorization if the API will be exposed publicly.
-
-If you want, I can now:
-- Add example payloads for every endpoint inside this README.
-- Create CI pipeline steps (GitHub Actions) to run tests and build.
-- Fix specific runtime errors you've seen (for example wiring issues in controllers) and run the test suite locally.
+Tell me which of these you'd like me to pick next and I'll proceed.
